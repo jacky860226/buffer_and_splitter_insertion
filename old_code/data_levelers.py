@@ -324,11 +324,11 @@ class DataLeveler:
         for net in nets:
             if len(net.post) > 1:
                 self.virtual_splitters.add(Distributor(self.module, net))
-        # for out in self.module.outputs:
-        #     out.remove_pre_assignment()
+        for out in self.module.outputs:
+            out.remove_pre_assignment()
         # self.ideal_case_solver()
         # self.worst_case_solver()
-        # self.clean_up()
+        self.clean_up()
         virtual_splitters_sorted = list(self.virtual_splitters)
         while len(virtual_splitters_sorted) != 0:
             self.module.reset_delay()
@@ -350,8 +350,8 @@ class DataLeveler:
                     margin = max(delays.values()) - delays.get(net.name)
             if margin != 0:
                 vs.add_delay(out.name, margin)
-        vs_leaf = vs.splitter_submerge()
-        vs_leaf.break_up(self.cell.max_fan_out, self.virtual_splitters_final)
+        vs_leaf = vs.splitter_submerge() # TODO: VirtualSplitterGeneration
+        vs_leaf.break_up(self.cell.max_fan_out, self.virtual_splitters_final) # TODO: VirtualSplitterMapping
 
     def level_outputs(self):
         delays = self.module.delays
