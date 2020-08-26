@@ -1,3 +1,13 @@
+class Node:
+    def __init__(self, L, R, childs):
+        self.L = L
+        self.R = R
+        self.childs = childs
+
+    def isLeaf(self):
+        return not isinstance(self.childs, list)
+
+
 class DP_Solver:
     def __init__(self):
         self.INF = 999999999999999999999999
@@ -31,22 +41,26 @@ class DP_Solver:
 
     def __build(self, L, R, SPO, level, createNode=False):
         if L == R:
-            res = self.idList[L]
+            res = Node(L, R, self.idList[L])
             for i in range(self.bufferNum[self.idList[L]] - level):
-                res = [res]
+                res = Node(L, R, [res])
             if createNode:
-                res = [res]
+                res = Node(L, R, [res])
             return res
         if SPO == 1:
             k = self.pivot[(L, R, SPO, level)]
             res = self.__build(L, R, k, level + 1, True)
+            res.L = L
+            res.R = R
             if createNode:
-                res = [res]
+                res = Node(L, R, [res])
             return res
         p = self.pivot[(L, R, SPO, level)]
         res = self.__build(L, p, SPO - 1, level, createNode)
-        assert isinstance(res, list)
-        res.append(self.__build(p + 1, R, 1, level))
+        assert isinstance(res, Node)
+        res.childs.append(self.__build(p + 1, R, 1, level))
+        res.L = L
+        res.R = R
         return res
 
     def solve(self, bufferNum, SPO_max):

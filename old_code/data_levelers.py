@@ -7,6 +7,9 @@ from typing import Dict
 from pins import PinIn, PinOut
 import math
 
+import sys
+sys.path.append("../src")
+from BufferAndSplitterInsertionSolver import *
 
 class Distributor(LogicBlock):
     def __init__(self, parent: Module, source: Wire, child_wires: Dict[Wire, int] = None):
@@ -17,6 +20,7 @@ class Distributor(LogicBlock):
         self._after = dict()
         self._delay_est = 1
         self._gate = 1
+        self._wire2pin = dict()
         if child_wires is None:
             org_post = set(source.post)
             for p in org_post:
@@ -50,14 +54,16 @@ class Distributor(LogicBlock):
         self._outputs.add(split_out_pin)
         self._tracker = self._tracker + 1
         self._after[split_out_pin.name] = delay
+        self._wire2pin[other] = split_out_pin
 
     def _level_up(self):
         new_source = self.parent.create_wire()
         internal_wires = dict()
         fo = len(self._outputs)
+        cut = min({self._after[p.name] for p in self._outputs})
         for i in range(fo):
             wire, delay = self._pop_out()
-            if delay > 0:
+            if cut > 0:
                 delay = delay - 1
             internal_wires[wire] = delay
         ds = Distributor(self.parent, new_source, internal_wires)
@@ -69,6 +75,8 @@ class Distributor(LogicBlock):
             pin = self._outputs.pop()
         else:
             self._outputs.remove(pin)
+        if pin.connection in self._wire2pin:
+            self._wire2pin.pop(pin.connection)
         delay = self._after[pin.name]
         wire = pin.connection
         pin.unbind()
@@ -95,8 +103,9 @@ class Distributor(LogicBlock):
             return
         self._after[other] = self._after.get(other) + margin
 
-    def buffer_float(self):
-        mutual = min(self._after.values())
+    def buffer_float(self, mutual=None):
+        if mutual is None:
+            mutual = min(self._after.values())
         if mutual != 0:
             self._before = self._before + mutual
             for k in self._after.keys():
@@ -148,6 +157,31 @@ class Distributor(LogicBlock):
             ds.buffer_float()
         self.buffer_float()
         return upper.break_up(degree, extra_splitters)
+    
+    def Jinkela(self, pinList, idList, node, extra_splitters, buffNum=0):
+        if node.isLeaf():
+            return
+        if len(node.childs) == 1:
+            self.Jinkela(pinList, idList,
+                         node.childs[0], extra_splitters, buffNum + 1)
+            return
+        self.buffer_float(buffNum)
+        extra_splitters.add(self)
+        for child in node.childs:
+            if child.L != child.R:
+                internal_wires = dict()
+                wireMap = dict()
+                for i in range(child.L, child.R+1):
+                    pin = pinList[idList[i]]
+                    wire, delay = self._pop_out(pin)
+                    internal_wires[wire] = delay - 1
+                    wireMap[wire] = i
+                sibling = self.parent.create_wire()
+                ds = Distributor(self.parent, sibling, internal_wires)
+                for k in ds._wire2pin.keys():
+                    pinList[idList[wireMap[k]]] = ds._wire2pin[k]
+                self._add_wire(sibling)
+                ds.Jinkela(pinList, idList, child, extra_splitters)
 
     @property
     def source(self):
@@ -332,7 +366,7 @@ class DataLeveler:
         virtual_splitters_sorted = list(self.virtual_splitters)
         while len(virtual_splitters_sorted) != 0:
             self.module.reset_delay()
-            virtual_splitters_sorted.sort(key=lambda x: (self.module.get_delay(x.source.name), x.max_delay))
+            virtual_splitters_sorted.sort(key=lambda x: (self.module.get_delay(x.source.name), x.max_delay, x.source.name))
             vs = virtual_splitters_sorted.pop(0)
             self._break_splitter(vs)
 
@@ -350,8 +384,25 @@ class DataLeveler:
                     margin = max(delays.values()) - delays.get(net.name)
             if margin != 0:
                 vs.add_delay(out.name, margin)
-        vs_leaf = vs.splitter_submerge() # TODO: VirtualSplitterGeneration
-        vs_leaf.break_up(self.cell.max_fan_out, self.virtual_splitters_final) # TODO: VirtualSplitterMapping
+
+        useNewAlgorithm = True
+        #useNewAlgorithm = False
+        if useNewAlgorithm:
+            solver = DP_Solver()
+            S = []
+            pinList = []
+            for pin in vs._outputs:
+                S.append(vs._after[pin.name] + 1)
+                pinList.append(pin)
+            res = solver.solve(S, self.cell.max_fan_out)
+            for k in vs._after.keys():
+                vs._after[k] += res[0][1]
+            vs.Jinkela(pinList, solver.idList,
+                       res[1], self.virtual_splitters_final)
+        else:
+            vs_leaf = vs.splitter_submerge()  # VirtualSplitterGeneration
+            vs_leaf.break_up(self.cell.max_fan_out,
+                             self.virtual_splitters_final)  # VirtualSplitterMapping
 
     def level_outputs(self):
         delays = self.module.delays
