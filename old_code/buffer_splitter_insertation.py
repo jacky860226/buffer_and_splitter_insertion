@@ -3,8 +3,10 @@ from data_levelers import DataLeveler, flow_checker, float_net_checker, missing_
 from default_cell_library import Library
 import sys
 
+best = None
 
 def process(argv):
+    global best
     lib = Library()
     VP = VerilogParser(lib)
     if len(argv) < 1:
@@ -32,16 +34,28 @@ def process(argv):
         out_file = file_name[:-2] + "_balanced.v"
     with open(out_file, 'w+') as f:
         f.write(module.to_verilog())
+    if best is None or best.gate_count > module.gate_count:
+        best = module
+        if len(argv) == 3:
+            out_file = argv[1]
+        else:
+            out_file = file_name[:-2] + "_best_balanced.v"
+        with open(out_file, 'w+') as f:
+            f.write(best.to_verilog())
+    print(best.gate_count)
+    return module.gate_count
 
 
 
-file_to_process = "./Files/c432.v"
+file_to_process = "./Files/c6288.v"
 
 
 def main(argv):
     file = [file_to_process]
     if len(argv) > 0:
         file = argv
-    process(file)
+    ggg = 10000000
+    while ggg > 50356:
+        ggg = process(file)
 
 main(sys.argv[1:])

@@ -1,5 +1,5 @@
 import sys
-import Structure.Raw
+import Raw
 
 
 class Parser:
@@ -36,7 +36,7 @@ class Parser:
         return res
 
     def __readSubModuleIo(self):
-        res = list()
+        res = dict()
         self.__getNextToken()  # '('
         while True:
             token = self.__getNextToken()
@@ -49,12 +49,12 @@ class Parser:
                 self.__getNextToken()  # '('
                 right = self.__getNextToken()
                 self.__getNextToken()  # ')'
-                res.append((left, right))
+                res[left] = right
         self.__getNextToken()  # ';'
         return res
 
     def __readModule(self):
-        rawModule = Structure.Raw.Module(self.__getNextToken())
+        rawModule = Raw.Module(self.__getNextToken())
         while ';' not in self.__getNextToken():
             pass
         while True:
@@ -73,10 +73,10 @@ class Parser:
                 self.__getNextToken()  # ';'
                 rawModule.assign.append((left, right))
             else:
-                rawSubModule = Structure.Raw.SubModule(
+                rawSubModule = Raw.SubModule(
                     token, self.__getNextToken())
-                rawSubModule.ioList = self.__readSubModuleIo()
-                rawModule.subModuleList.append(rawSubModule)
+                rawSubModule.ioDict = self.__readSubModuleIo()
+                rawModule.subModuleList.add(rawSubModule)
         return rawModule
 
     def parse(self, inputStream=sys.stdin):
