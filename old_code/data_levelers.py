@@ -60,10 +60,9 @@ class Distributor(LogicBlock):
         new_source = self.parent.create_wire()
         internal_wires = dict()
         fo = len(self._outputs)
-        cut = min({self._after[p.name] for p in self._outputs})
         for i in range(fo):
             wire, delay = self._pop_out()
-            if cut > 0:
+            if delay > 0:
                 delay = delay - 1
             internal_wires[wire] = delay
         ds = Distributor(self.parent, new_source, internal_wires)
@@ -366,7 +365,7 @@ class DataLeveler:
         virtual_splitters_sorted = list(self.virtual_splitters)
         while len(virtual_splitters_sorted) != 0:
             self.module.reset_delay()
-            virtual_splitters_sorted.sort(key=lambda x: (self.module.get_delay(x.source.name), x.max_delay, x.source.name))
+            virtual_splitters_sorted.sort(key=lambda x: (self.module.get_delay(x.source.name), x.max_delay))
             vs = virtual_splitters_sorted.pop(0)
             self._break_splitter(vs)
 
@@ -387,16 +386,20 @@ class DataLeveler:
 
         useNewAlgorithm = True
         #useNewAlgorithm = False
-        if useNewAlgorithm:
+        if useNewAlgorithm: # TODO
             solver = DP_Solver()
             S = []
             pinList = []
             for pin in vs._outputs:
                 S.append(vs._after[pin.name] + 1)
                 pinList.append(pin)
+            old = S.copy()
             res = solver.solve(S, self.cell.max_fan_out)
-            for k in vs._after.keys():
-                vs._after[k] += res[0][1]
+            for i in range(len(pinList)):
+                name = pinList[i].name
+                S[i] = solver.bufferNum[i]
+                vs._after[name] = S[i] - 1
+            #print(old, res[0])
             vs.Jinkela(pinList, solver.idList,
                        res[1], self.virtual_splitters_final)
         else:

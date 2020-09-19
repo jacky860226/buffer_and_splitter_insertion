@@ -35,7 +35,7 @@ def process(argv):
 
 
 
-file_to_process = "./Files/c432.v"
+file_to_process = "./Files/c6288.v"
 
 
 def main(argv):
