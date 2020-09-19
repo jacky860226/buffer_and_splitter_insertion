@@ -1,6 +1,6 @@
 import argparse
 import Parser
-import Middle
+import Basic
 import sys
 
 
@@ -21,20 +21,5 @@ if __name__ == '__main__':
     else:
         inputStream = sys.stdin
     rawModule = parser.parse(inputStream)
-    # rawModule.print()
-    middle = Middle.Middle(rawModule)
-    # middle.printConnect()
-    print("original JJ = ", middle.ori_jj)
-    print("original buffer = ", middle.buffer_cnt, ", splitter = ",
-          middle.splitter_cnt, "total = ", middle.buffer_cnt + middle.splitter_cnt)
-    middle.BufferAndSplitterInsertion()
-    print("new buffer = ", middle.new_buffer_cnt, ", splitter = ",
-          middle.new_splitter_cnt, "total = ", middle.new_buffer_cnt + middle.new_splitter_cnt)
-
-    fout = open(arg.input+".jinkela.v", "w")
-    rawModule.verilog_output(fout)
-    fout.close()
-
-    # rawModule.print()
-    middle_new = Middle.Middle(rawModule)
-    print("new JJ = ", middle_new.ori_jj)
+    moudle = Basic.Module(rawModule)
+    # moudle.verilog_output(sys.stdout)

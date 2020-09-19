@@ -25,11 +25,11 @@ class Cell():
 
     @property
     def input_labels(self):
-        return [x.name for x in self._inputs]
+        return [x for x in self._inputs]
 
     @property
     def output_labels(self):
-        return [self._output.name]
+        return [self._output]
 
     def truth_value(self):
         return self._truth_values
@@ -61,11 +61,11 @@ class Buffer():
 
     @property
     def input_labels(self):
-        return [self._input.name]
+        return [self._input]
 
     @property
     def output_labels(self):
-        return [self._output.name]
+        return [self._output]
 
     def truth_value(self):
         return 1
@@ -97,7 +97,7 @@ class Splitter():
 
     @property
     def input_labels(self):
-        return [self._input.name]
+        return [self._input]
 
     @property
     def output_labels(self):
