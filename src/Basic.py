@@ -50,8 +50,8 @@ class Output(Node):
 
 class Module:
     def __init__(self, raw_module):
-        special_constant = ["1'b0", "1'b1"]
-        for b in special_constant:
+        self.special_constant = ["1'b0", "1'b1"]
+        for b in self.special_constant:
             raw_module.input.add(b)
         self.library = default_cell_library.Library()
         self.name = raw_module.name
@@ -61,17 +61,27 @@ class Module:
         self._create_cell_dict(raw_module)
         wire_dict = self._create_wire_dict(raw_module)
 
-        for b in special_constant:
+        for b in self.special_constant:
             if len(wire_dict[b].output_port_set) == 0:
                 del wire_dict[b]
                 self.input.output_port_name.remove(b)
                 del self.input.output_wire[b]
-            else:
-                print(wire_dict[b].output_port_set)
 
         self.wires = set()
         for wire in wire_dict.values():
             self.wires.add(wire)
+
+    def add_wire_to_cell_input(self, wire, port_name, cell, delay=0):
+        wire_output = (cell, port_name)
+        wire.output_port_set.add(wire_output)
+        wire.output_delay[wire_output] = delay
+        cell.add_input_wire(port_name, wire)
+
+    def add_wire_to_cell_output(self, wire, port_name, cell):
+        wire_input = (cell, port_name)
+        assert(wire.input_port is None)
+        wire.input_port = wire_input
+        cell.add_output_wire(port_name, wire)
 
     def _create_cell_dict(self, raw_module):
         self.cell_dict = dict()
@@ -93,30 +103,18 @@ class Module:
             cur_cell = self.cell_dict[sm.name]
             for port_name in cur_cell.input_port_name:
                 wire_name = sm.ioDict[port_name]
-                wire_output = (cur_cell, port_name)
                 cur_wire = wire_dict[wire_name]
-                cur_wire.output_port_set.add(wire_output)
-                cur_wire.output_delay[wire_output] = 0
-                cur_cell.add_input_wire(port_name, cur_wire)
+                self.add_wire_to_cell_input(cur_wire, port_name, cur_cell)
             for port_name in cur_cell.output_port_name:
                 wire_name = sm.ioDict[port_name]
-                wire_input = (cur_cell, port_name)
                 cur_wire = wire_dict[wire_name]
-                assert(cur_wire.input_port is None)
-                cur_wire.input_port = wire_input
-                cur_cell.add_output_wire(port_name, cur_wire)
+                self.add_wire_to_cell_output(cur_wire, port_name, cur_cell)
         for w in self.input.output_port_name:
             cur_wire = wire_dict[w]
-            wire_input = (self.input, w)
-            assert(cur_wire.input_port is None)
-            cur_wire.input_port = wire_input
-            self.input.add_output_wire(w, cur_wire)
+            self.add_wire_to_cell_output(cur_wire, w, self.input)
         for w in self.output.input_port_name:
             cur_wire = wire_dict[w]
-            wire_output = (self.output, w)
-            cur_wire.output_port_set.add(wire_output)
-            cur_wire.output_delay[wire_output] = 0
-            self.output.add_input_wire(w, cur_wire)
+            self.add_wire_to_cell_input(cur_wire, w, self.output)
         return wire_dict
 
     def verilog_output(self, fout):
@@ -176,5 +174,3 @@ class Module:
                     fout.write(",\n")
             fout.write("    );\n\n")
         fout.write("endmodule\n")
-        for w in self.wires:
-            print(wire_name_table[w], w.input_port, w.output_port_set, w.output_delay)
