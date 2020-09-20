@@ -3,6 +3,8 @@ import Parser
 import Basic
 import sys
 
+from data_leveler import Up_delay_initialer, Down_delay_initialer, Leveler
+
 
 def process_command():
     parser = argparse.ArgumentParser(prog='BufferAndSplitterAdder')
@@ -22,4 +24,9 @@ if __name__ == '__main__':
         inputStream = sys.stdin
     rawModule = parser.parse(inputStream)
     moudle = Basic.Module(rawModule)
+    delay_initialer = Up_delay_initialer(moudle)
+    leveler = Leveler(moudle, delay_initialer, 'U')
+    leveler.process()
     # moudle.verilog_output(sys.stdout)
+    print(delay_initialer.max_delay() - 2)
+    print(leveler.check())
