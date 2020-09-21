@@ -1,4 +1,3 @@
-
 import default_cell_library
 
 
@@ -117,6 +116,12 @@ class Module:
             self.add_wire_to_cell_input(cur_wire, w, self.output)
         return wire_dict
 
+    def get_JJ_count(self):
+        cnt = 0
+        for cell in self.cell_dict.values():
+            cnt += cell.type.gate_count
+        return cnt
+
     def verilog_output(self, fout):
         input_wires = set()
         output_wires = set()
@@ -124,6 +129,8 @@ class Module:
         wire_name_table = dict()
         for wire_name, wire in self.input.output_wire.items():
             wire_name_table[wire] = wire_name
+            if wire_name in self.special_constant:
+                continue
             input_wires.add(wire)
         for wire_name, wire in self.output.input_wire.items():
             wire_name_table[wire] = wire_name
@@ -143,6 +150,8 @@ class Module:
         fout.write(");\n")
         for w in self.wires:
             if w in input_wires or w in output_wires:
+                continue
+            if w in wire_name_table and wire_name_table[w] in self.special_constant:
                 continue
             wire_name_table[w] = "jinkela_wire_"+str(wire_cnt)
             wire_cnt += 1

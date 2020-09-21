@@ -71,7 +71,6 @@ class Leveler:
     def process(self):
         self.wire_sequence = list()
         self._level_up()
-        self.check()
 
     def reset_unprocess_wire_delay(self):
         for wire in self.unprocess_wire:
@@ -88,43 +87,35 @@ class Leveler:
                     output_delay - input_delay) - 1
 
     def get_wire_extra_delay(self, wire):
-        S = list(wire.output_delay.values())
+        node_port_list = list()
+        S = list()
+        for key, value in wire.output_delay.items():
+            node_port_list.append(key)
+            S.append(value)
         solver = BSI.DP_Solver()
-        res = solver.solve(S, self.module.library.max_fan_out)
-        return res
+        res = solver.solve(S.copy(), self.module.library.max_fan_out)
+        return node_port_list, res
 
     def _create_wire_sequence(self):
-        self.wire_sequence = list()
-        node_list = list(self.module.cell_dict.values())
-        node_list.append(self.module.input)
-        node_list.append(self.module.output)
-        node_list.sort(key=lambda x: self.delay_initialer[x])
-        if node_list[0] == self.end:
-            node_list.sort(key=lambda x: -self.delay_initialer[x])
-        assert(node_list[0] == self.begin)
-        for node in node_list:
-            for port_name, wire in node.get_outputs():
-                if wire in self.unprocess_wire:
-                    self.wire_sequence.append(wire)
+        self.wire_sequence = list(self.unprocess_wire)
+        self.wire_sequence.sort(
+            key=lambda x: self.delay_initialer[x.input_port[0]])
+        first_node = self.wire_sequence[0].input_port[0]
+        back_node = self.wire_sequence[-1].input_port[0]
+        if first_node == self.end or back_node == self.begin:
+            self.wire_sequence.sort(
+                key=lambda x: -self.delay_initialer[x.input_port[0]])
 
     def _level_up(self):
-        while True:
+        while len(self.unprocess_wire) > 0:
             self.reset_unprocess_wire_delay()
             self.cal_wire_delay()
             self._create_wire_sequence()
-            if len(self.wire_sequence) == 0:
-                break
             wire = self.wire_sequence[0]
-            extra_delay = self.get_wire_extra_delay(wire)[0][1]
-            for key in wire.output_delay:
-                wire.output_delay[key] += extra_delay
+            node_port_list, res = self.get_wire_extra_delay(wire)
+            new_delay = res[0][1]
+            for i in range(len(node_port_list)):
+                key = node_port_list[i]
+                wire.output_delay[key] = new_delay[i]
             self.unprocess_wire.remove(wire)
         self.cal_wire_delay()
-
-    def check(self):
-        ans = 0
-        for w in self.module.wires:
-            res = self.get_wire_extra_delay(w)
-            assert(res[0][1] == 0)
-            ans += res[0][0]
-        return ans

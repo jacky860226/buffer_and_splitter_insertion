@@ -1,6 +1,7 @@
 import argparse
 import Parser
 import Basic
+import Inserter
 import sys
 
 from data_leveler import Up_delay_initialer, Down_delay_initialer, Leveler
@@ -27,6 +28,14 @@ if __name__ == '__main__':
     delay_initialer = Up_delay_initialer(moudle)
     leveler = Leveler(moudle, delay_initialer, 'U')
     leveler.process()
-    # moudle.verilog_output(sys.stdout)
-    print(delay_initialer.max_delay() - 2)
-    print(leveler.check())
+    inserter = Inserter.Buffer_splitter_inserter(moudle)
+    if arg.input is not None:
+        with open(arg.output, 'w') as outputStream:
+            moudle.verilog_output(outputStream)
+    else:
+        moudle.verilog_output(sys.stdout)
+    print(arg.input)
+    print("JJ level =", delay_initialer.max_delay() - 2)
+    print("JJ count =", moudle.get_JJ_count())
+    print("bufferNum =", inserter.buffer_cnt,
+          ", splitterNum =", inserter.splitter_cnt, "\n")

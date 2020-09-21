@@ -29,24 +29,26 @@ class DP_Solver:
         self.dp[(L, R, SPO, level)] = res
         return res
 
-    def __build(self, L, R, SPO, level, createNode=False):
+    def __build(self, L, R, SPO, level, realLevel=0, createNode=False):
         if L == R:
             res = self.idList[L]
-            for i in range(self.bufferNum[self.idList[L]] - level):
+            buffer_delay = self.bufferNum[res] - level
+            self.bufferNum[res] = realLevel + buffer_delay
+            for i in range(buffer_delay):
                 res = [res]
             if createNode:
                 res = [res]
             return res
         if SPO == 1:
             k = self.pivot[(L, R, SPO, level)]
-            res = self.__build(L, R, k, level + 1, True)
+            res = self.__build(L, R, k, level + 1, realLevel + 1, True)
             if createNode:
                 res = [res]
             return res
         p = self.pivot[(L, R, SPO, level)]
-        res = self.__build(L, p, SPO - 1, level, createNode)
+        res = self.__build(L, p, SPO - 1, level, realLevel, createNode)
         assert isinstance(res, list)
-        res.append(self.__build(p + 1, R, 1, level))
+        res.append(self.__build(p + 1, R, 1, level, realLevel))
         return res
 
     def solve(self, bufferNum, SPO_max):
@@ -60,7 +62,6 @@ class DP_Solver:
         self.idList.sort(key=lambda x: self.bufferNum[x])
         self.SPO_max = SPO_max
 
-        additional_buffer = 0
         search_result = None
         while True:
             self.dp = dict()
@@ -70,6 +71,7 @@ class DP_Solver:
                 break
             for i in range(N):
                 self.bufferNum[i] += 1
-            additional_buffer += 1
 
-        return (search_result, additional_buffer), self.__build(0, len(bufferNum) - 1, 1, 0)
+        tree = self.__build(0, len(bufferNum) - 1, 1, 0)
+
+        return (search_result, self.bufferNum), tree
