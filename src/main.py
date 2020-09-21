@@ -24,18 +24,32 @@ if __name__ == '__main__':
     else:
         inputStream = sys.stdin
     rawModule = parser.parse(inputStream)
-    moudle = Basic.Module(rawModule)
-    delay_initialer = Up_delay_initialer(moudle)
-    leveler = Leveler(moudle, delay_initialer, 'U')
+    module = Basic.Module(rawModule)
+
+    delay_initialer = Up_delay_initialer(module)
+    leveler = Leveler(module, delay_initialer, 'U')
     leveler.process()
-    inserter = Inserter.Buffer_splitter_inserter(moudle)
+
+    inserter = Inserter.Buffer_splitter_inserter(module)
+    inserter.insert_splitter()
+    dec_buffer = inserter.buffer_decrease()
+    inserter.insert_buffer_and_splitter()
+
+    leveler.reset_unprocess_wire_delay()
+    leveler.cal_wire_delay()
+    for wire in module.wires:
+        for delay in wire.output_delay.values():
+            assert(delay == 0)
+
     if arg.input is not None:
         with open(arg.output, 'w') as outputStream:
-            moudle.verilog_output(outputStream)
+            module.verilog_output(outputStream)
     else:
-        moudle.verilog_output(sys.stdout)
+        module.verilog_output(sys.stdout)
     print(arg.input)
     print("JJ level =", delay_initialer.max_delay() - 2)
-    print("JJ count =", moudle.get_JJ_count())
+    print("JJ count =", module.get_JJ_count())
     print("bufferNum =", inserter.buffer_cnt,
-          ", splitterNum =", inserter.splitter_cnt, "\n")
+          ", splitterNum =", inserter.splitter_cnt)
+    print("buffer decrease by decreaser:", dec_buffer)
+    print("")

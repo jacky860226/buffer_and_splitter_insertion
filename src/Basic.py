@@ -34,6 +34,18 @@ class Node:
     def get_outputs(self):
         return self.output_wire.items()
 
+    def delay_push_down(self):
+        delay_list = list()
+        for port_name, wire in self.get_inputs():
+            delay_list.append(wire.output_delay[(self, port_name)])
+        min_delay = min(delay_list)
+        for port_name, wire in self.get_inputs():
+            wire.output_delay[(self, port_name)] -= min_delay
+        for port_name, wire in self.get_outputs():
+            for key in wire.output_delay:
+                wire.output_delay[key] += min_delay
+        return min_delay * (len(delay_list) - 1)
+
 
 class Input(Node):
     def __init__(self, input_wire):
