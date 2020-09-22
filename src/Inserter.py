@@ -1,4 +1,4 @@
-import BufferAndSplitterInsertionSolver as BSI
+import Wire_delay_adder
 import Basic
 from data_leveler import Down_delay_initialer
 
@@ -6,6 +6,7 @@ from data_leveler import Down_delay_initialer
 class Buffer_splitter_inserter:
     def __init__(self, module):
         self.module = module
+        self.wire_delay_adder = Wire_delay_adder.DynamicProgramming(module)
         self.buffer_cnt = 0
         self.splitter_cnt = 0
 
@@ -36,24 +37,14 @@ class Buffer_splitter_inserter:
             dec_buffer += node.delay_push_down()
         return dec_buffer
 
-    def get_wire_extra_delay(self, wire):
-        node_port_list = list()
-        S = list()
-        for key, value in wire.output_delay.items():
-            node_port_list.append(key)
-            S.append(value)
-        solver = BSI.DP_Solver()
-        res = solver.solve(S.copy(), self.module.library.max_fan_out)
-        return node_port_list, res
-
     def _process_wire(self, wire):
-        node_port_list, res = self.get_wire_extra_delay(wire)
+        node_port_list, res = self.wire_delay_adder.get_wire_extra_delay(wire)
         for i in range(len(node_port_list)):
             assert(res[0][1][i] == wire.output_delay[node_port_list[i]])
         self._build(wire.input_port, res[1], node_port_list)
 
     def _process_wire_splitter(self, wire):
-        node_port_list, res = self.get_wire_extra_delay(wire)
+        node_port_list, res = self.wire_delay_adder.get_wire_extra_delay(wire)
         for i in range(len(node_port_list)):
             assert(res[0][1][i] == wire.output_delay[node_port_list[i]])
         self._build_splitter(wire.input_port, res[1], node_port_list)

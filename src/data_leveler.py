@@ -1,6 +1,3 @@
-import BufferAndSplitterInsertionSolver as BSI
-
-
 class Delay_initialer:
     def __init__(self, module):
         self.module = module
@@ -55,9 +52,10 @@ class Down_delay_initialer(Delay_initialer):
 
 
 class Leveler:
-    def __init__(self, module, delay_initialer, Type):
+    def __init__(self, module, delay_initialer, Type, wire_delay_adder):
         self.module = module
         self.delay_initialer = delay_initialer
+        self.wire_delay_adder = wire_delay_adder
         self.unprocess_wire = module.wires.copy()
         if Type == 'D':
             self.begin = self.module.input
@@ -74,8 +72,12 @@ class Leveler:
 
     def reset_unprocess_wire_delay(self):
         for wire in self.unprocess_wire:
-            for key in wire.output_delay:
-                wire.output_delay[key] = 0
+            if len(wire.output_delay) <= 1:
+                for key in wire.output_delay:
+                    wire.output_delay[key] = 0
+            else:
+                for key in wire.output_delay:
+                    wire.output_delay[key] = 1
 
     def cal_wire_delay(self):
         self.delay_initialer.create_raw_delay()
@@ -85,16 +87,6 @@ class Leveler:
                 output_delay = self.delay_initialer[node]
                 wire.output_delay[(node, port_name)] = abs(
                     output_delay - input_delay) - 1
-
-    def get_wire_extra_delay(self, wire):
-        node_port_list = list()
-        S = list()
-        for key, value in wire.output_delay.items():
-            node_port_list.append(key)
-            S.append(value)
-        solver = BSI.DP_Solver()
-        res = solver.solve(S.copy(), self.module.library.max_fan_out)
-        return node_port_list, res
 
     def _create_wire_sequence(self):
         self.wire_sequence = list(self.unprocess_wire)
@@ -112,10 +104,6 @@ class Leveler:
             self.cal_wire_delay()
             self._create_wire_sequence()
             wire = self.wire_sequence[0]
-            node_port_list, res = self.get_wire_extra_delay(wire)
-            new_delay = res[0][1]
-            for i in range(len(node_port_list)):
-                key = node_port_list[i]
-                wire.output_delay[key] = new_delay[i]
             self.unprocess_wire.remove(wire)
+            self.wire_delay_adder.wire_add_delay(wire)
         self.cal_wire_delay()
