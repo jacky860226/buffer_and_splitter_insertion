@@ -64,7 +64,7 @@ class Second_leveler:
             if len(wire.output_delay) > 1:
                 for key in wire.output_delay:
                     wire.output_delay[key] = 1
-            self.unprocess_wire.add(wire)
+                self.unprocess_wire.add(wire)
         while len(self.unprocess_wire) > 0:
             self.wire_sequence = list(self.unprocess_wire)
             self.delay_calculater.clear_delay()

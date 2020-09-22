@@ -119,6 +119,10 @@ if __name__ == '__main__':
         rawModule, Wire_delay_adder.DynamicProgramming)[0]
     SecondSolver(rawModule, Wire_delay_adder.DynamicProgramming)
 
+    UpUpSolver(rawModule, Wire_delay_adder.SecondAdder)[0]
+    DownDownSolver(rawModule, Wire_delay_adder.SecondAdder)[0]
+    SecondSolver(rawModule, Wire_delay_adder.SecondAdder)
+
     print("")
 
     output_module = UpUp_module
