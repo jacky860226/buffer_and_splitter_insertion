@@ -1,9 +1,10 @@
 import BufferAndSplitterInsertionSolver as BSI
 
 
-class DynamicProgramming:
-    def __init__(self, module):
+class DynamicProgrammingBase:
+    def __init__(self, module, solverTy):
         self.module = module
+        self.solverTy = solverTy
 
     def get_wire_extra_delay(self, wire):
         node_port_list = list()
@@ -11,7 +12,7 @@ class DynamicProgramming:
         for key, value in wire.output_delay.items():
             node_port_list.append(key)
             S.append(value)
-        solver = BSI.DP_Solver()
+        solver = self.solverTy()
         res = solver.solve(S.copy(), self.module.library.max_fan_out)
         return node_port_list, res
 
@@ -21,6 +22,11 @@ class DynamicProgramming:
         for i in range(len(node_port_list)):
             key = node_port_list[i]
             wire.output_delay[key] = new_delay[i]
+
+
+class DynamicProgramming(DynamicProgrammingBase):
+    def __init__(self, module):
+        super().__init__(module, BSI.DP_Solver)
 
 
 class PsudoNode:

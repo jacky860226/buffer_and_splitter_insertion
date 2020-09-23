@@ -18,6 +18,15 @@ def process_command():
     return parser.parse_args()
 
 
+def printer(module, JJ_level, JJ_count, buffer_cnt, splitter_cnt, dec_buffer):
+    print("JJ level =", JJ_level)
+    print("JJ count =", JJ_count)
+    print("bufferNum =", buffer_cnt,
+          ", splitterNum =", splitter_cnt)
+    print("buffer decrease by decreaser:", dec_buffer)
+    print("")
+
+
 def UpUpSolver(rawModule, wire_delay_adder_ty):
     module = Basic.Module(rawModule)
 
@@ -40,13 +49,8 @@ def UpUpSolver(rawModule, wire_delay_adder_ty):
 
     JJ_level = delay_initialer.max_delay() - 2
     JJ_count = module.get_JJ_count()
-    print("JJ level =", JJ_level)
-    print("JJ count =", JJ_count)
-    print("bufferNum =", inserter.buffer_cnt,
-          ", splitterNum =", inserter.splitter_cnt)
-    print("buffer decrease by decreaser:", dec_buffer)
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
 
 
 def DownDownSolver(rawModule, wire_delay_adder_ty):
@@ -70,13 +74,8 @@ def DownDownSolver(rawModule, wire_delay_adder_ty):
 
     JJ_level = delay_initialer.max_delay() - 2
     JJ_count = module.get_JJ_count()
-    print("JJ level =", JJ_level)
-    print("JJ count =", JJ_count)
-    print("bufferNum =", inserter.buffer_cnt,
-          ", splitterNum =", inserter.splitter_cnt)
-    print("buffer decrease by decreaser:", dec_buffer)
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
 
 
 def SecondSolver(rawModule, wire_delay_adder_ty):
@@ -93,13 +92,8 @@ def SecondSolver(rawModule, wire_delay_adder_ty):
 
     JJ_level = leveler.delay_calculater.max_delay() - 2
     JJ_count = module.get_JJ_count()
-    print("JJ level =", JJ_level)
-    print("JJ count =", JJ_count)
-    print("bufferNum =", inserter.buffer_cnt,
-          ", splitterNum =", inserter.splitter_cnt)
-    print("buffer decrease by decreaser:", dec_buffer)
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
 
 
 if __name__ == '__main__':
@@ -114,18 +108,25 @@ if __name__ == '__main__':
 
     print(arg.input)
 
-    UpUp_module = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming)[0]
-    DownDown_module = DownDownSolver(
-        rawModule, Wire_delay_adder.DynamicProgramming)[0]
-    SecondSolver(rawModule, Wire_delay_adder.DynamicProgramming)
+    UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming)
+    DownDown = DownDownSolver(
+        rawModule, Wire_delay_adder.DynamicProgramming)
+    Second = SecondSolver(
+        rawModule, Wire_delay_adder.DynamicProgramming)
 
-    UpUpSolver(rawModule, Wire_delay_adder.SecondAdder)[0]
-    DownDownSolver(rawModule, Wire_delay_adder.SecondAdder)[0]
-    SecondSolver(rawModule, Wire_delay_adder.SecondAdder)
+    first = [UpUp, DownDown, Second]
+    output = min(first, key=lambda x: x[2])
 
-    print("")
+    for _ in range(10):
+        UpUp = UpUpSolver(rawModule, Wire_delay_adder.SecondAdder)
+        DownDown = DownDownSolver(rawModule, Wire_delay_adder.SecondAdder)
+        Second = SecondSolver(rawModule, Wire_delay_adder.SecondAdder)
+        first = [output, UpUp, DownDown, Second]
+        output = min(first, key=lambda x: x[2])
 
-    output_module = UpUp_module
+    output_module = output[0]
+
+    printer(*output)
 
     if output_module is not None:
         if arg.output is not None:
