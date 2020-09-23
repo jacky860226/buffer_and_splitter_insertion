@@ -7,6 +7,9 @@ class Wire:
         self.output_port_set = set()
         self.output_delay = dict()
 
+    def max_delay(self):
+        return max(self.output_delay.values())
+
 
 class Node:
     def __init__(self, _type):
@@ -38,6 +41,8 @@ class Node:
         delay_list = list()
         for port_name, wire in self.get_inputs():
             delay_list.append(wire.output_delay[(self, port_name)])
+        if len(delay_list) == 0:
+            return 0
         min_delay = min(delay_list)
         for port_name, wire in self.get_inputs():
             wire.output_delay[(self, port_name)] -= min_delay

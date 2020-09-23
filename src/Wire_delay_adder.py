@@ -125,6 +125,8 @@ class SecondAdder:
 
     def wire_add_delay(self, wire):
         S = list()
+        if len(wire.output_delay) <= 1:
+            return
         for key, value in wire.output_delay.items():
             S.append((key[0], key[1], max(value, 1) - 1))
         root = PsudoNode(S, 0).dfs()

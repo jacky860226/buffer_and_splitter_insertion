@@ -69,7 +69,7 @@ class Second_leveler:
             self.wire_sequence = list(self.unprocess_wire)
             self.delay_calculater.clear_delay()
             self.wire_sequence.sort(
-                key=lambda x: self.delay_calculater.get_delay(x.input_port[0]))
+                key=lambda x: (self.delay_calculater.get_delay(x.input_port[0]), x.max_delay()))
             cur_wire = self.wire_sequence[0]
             self.unprocess_wire.remove(cur_wire)
             self.calculate_wire_delay(cur_wire)
