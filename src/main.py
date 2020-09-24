@@ -111,18 +111,18 @@ if __name__ == '__main__':
     UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
     DownDown = DownDownSolver(
         rawModule, Wire_delay_adder.DynamicProgramming2)
-    Second = SecondSolver(
-        rawModule, Wire_delay_adder.DynamicProgramming2)
 
-    first = [UpUp, DownDown, Second]
+    first = [UpUp, DownDown]
     output = min(first, key=lambda x: x[2])
 
-    for _ in range(10):
-        UpUp = UpUpSolver(rawModule, Wire_delay_adder.SecondAdder)
+    # the old method
+    '''
+    for _ in range(1):
         DownDown = DownDownSolver(rawModule, Wire_delay_adder.SecondAdder)
         Second = SecondSolver(rawModule, Wire_delay_adder.SecondAdder)
-        first = [output, UpUp, DownDown, Second]
+        first = [output, DownDown, Second]
         output = min(first, key=lambda x: x[2])
+    '''
 
     output_module = output[0]
 
