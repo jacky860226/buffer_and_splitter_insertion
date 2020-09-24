@@ -108,11 +108,11 @@ if __name__ == '__main__':
 
     print(arg.input)
 
-    UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming)
+    UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
     DownDown = DownDownSolver(
-        rawModule, Wire_delay_adder.DynamicProgramming)
+        rawModule, Wire_delay_adder.DynamicProgramming2)
     Second = SecondSolver(
-        rawModule, Wire_delay_adder.DynamicProgramming)
+        rawModule, Wire_delay_adder.DynamicProgramming2)
 
     first = [UpUp, DownDown, Second]
     output = min(first, key=lambda x: x[2])

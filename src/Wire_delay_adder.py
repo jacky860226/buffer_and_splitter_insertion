@@ -29,6 +29,11 @@ class DynamicProgramming(DynamicProgrammingBase):
         super().__init__(module, BSI.DP_Solver)
 
 
+class DynamicProgramming2(DynamicProgrammingBase):
+    def __init__(self, module):
+        super().__init__(module, BSI.DP_Solver_2)
+
+
 class PsudoNode:
     def __init__(self, child, delta, parent=None):
         self.child = child
