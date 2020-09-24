@@ -91,12 +91,12 @@ class Leveler:
     def _create_wire_sequence(self):
         self.wire_sequence = list(self.unprocess_wire)
         self.wire_sequence.sort(
-            key=lambda x: self.delay_initialer[x.input_port[0]])
+            key=lambda x: (self.delay_initialer[x.input_port[0]], x.max_delay()))
         first_node = self.wire_sequence[0].input_port[0]
         back_node = self.wire_sequence[-1].input_port[0]
         if first_node == self.end or back_node == self.begin:
             self.wire_sequence.sort(
-                key=lambda x: -self.delay_initialer[x.input_port[0]])
+                key=lambda x: (-self.delay_initialer[x.input_port[0]], x.max_delay()))
 
     def _level_up(self):
         while len(self.unprocess_wire) > 0:

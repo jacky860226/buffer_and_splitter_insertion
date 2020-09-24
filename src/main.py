@@ -37,8 +37,7 @@ def UpUpSolver(rawModule, wire_delay_adder_ty):
     leveler.process()
 
     inserter = Inserter.Buffer_splitter_inserter(module)
-    inserter.insert_splitter()
-    dec_buffer = inserter.buffer_decrease()
+    dec_buffer = inserter.insert_splitter()
     inserter.insert_buffer_and_splitter()
 
     leveler.reset_unprocess_wire_delay()
@@ -62,8 +61,7 @@ def DownDownSolver(rawModule, wire_delay_adder_ty):
     leveler.process()
 
     inserter = Inserter.Buffer_splitter_inserter(module)
-    inserter.insert_splitter()
-    dec_buffer = inserter.buffer_decrease()
+    dec_buffer = inserter.insert_splitter()
     inserter.insert_buffer_and_splitter()
 
     leveler.reset_unprocess_wire_delay()
@@ -86,8 +84,7 @@ def SecondSolver(rawModule, wire_delay_adder_ty):
     leveler.process()
 
     inserter = Inserter.Buffer_splitter_inserter(module)
-    inserter.insert_splitter()
-    dec_buffer = inserter.buffer_decrease()
+    dec_buffer = inserter.insert_splitter()
     inserter.insert_buffer_and_splitter()
 
     JJ_level = leveler.delay_calculater.max_delay() - 2

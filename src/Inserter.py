@@ -17,24 +17,19 @@ class Buffer_splitter_inserter:
             self.module.wires.remove(wire)
 
     def insert_splitter(self):
-        self.old_wires = self.module.wires.copy()
-        for wire in self.old_wires:
-            self._process_wire_splitter(wire)
-            self.module.wires.remove(wire)
-
-    def buffer_decrease(self):
         delay_initialer = Down_delay_initialer(self.module)
         delay_initialer.create_raw_delay()
-        dec_buffer = 0
+        self.old_wires = list(self.module.wires.copy())
+        self.old_wires.sort(key=lambda x: delay_initialer[x.input_port[0]])
         node_set = set(self.module.cell_dict.values())
-        while len(node_set) > 0:
-            node_list = list(node_set)
-            node_list.sort(key=lambda x: delay_initialer[x])
-            node = node_list[0]
-            node_set.remove(node)
-            if len(node.get_outputs()) > 1:
-                continue
-            dec_buffer += node.delay_push_down()
+        dec_buffer = 0
+        for wire in self.old_wires:
+            node = wire.input_port[0]
+            if node in node_set:
+                node_set.remove(node)
+                dec_buffer += node.delay_push_down()
+            self._process_wire_splitter(wire)
+            self.module.wires.remove(wire)
         return dec_buffer
 
     def _process_wire(self, wire):
