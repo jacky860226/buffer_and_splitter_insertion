@@ -52,11 +52,12 @@ class Down_delay_initialer(Delay_initialer):
 
 
 class Leveler:
-    def __init__(self, module, delay_initialer, Type, wire_delay_adder):
+    def __init__(self, module, delay_initialer, Type, wire_delay_adder, need_legal_delay=False):
         self.module = module
         self.delay_initialer = delay_initialer
         self.wire_delay_adder = wire_delay_adder
         self.unprocess_wire = module.wires.copy()
+        self.need_legal_delay = need_legal_delay
         if Type == 'D':
             self.begin = self.module.input
             self.end = self.module.output
@@ -70,14 +71,24 @@ class Leveler:
         self.wire_sequence = list()
         self._level_up()
 
+    def init_old_legal_delay(self):
+        self.old_legal_delay = dict()
+        for wire in self.module.wires:
+            if len(wire.output_delay) > 1:
+                self.wire_delay_adder.wire_add_delay(wire)
+                self.old_legal_delay[wire] = wire.output_delay.copy()
+
     def reset_unprocess_wire_delay(self):
         for wire in self.unprocess_wire:
             if len(wire.output_delay) <= 1:
                 for key in wire.output_delay:
                     wire.output_delay[key] = 0
             else:
-                for key in wire.output_delay:
-                    wire.output_delay[key] = 1
+                if self.need_legal_delay:
+                    wire.output_delay = self.old_legal_delay[wire]
+                else:
+                    for key in wire.output_delay:
+                        wire.output_delay[key] = 1
 
     def cal_wire_delay(self):
         self.delay_initialer.create_raw_delay()
@@ -99,6 +110,8 @@ class Leveler:
                 key=lambda x: (-self.delay_initialer[x.input_port[0]], x.max_delay()))
 
     def _level_up(self):
+        if self.need_legal_delay:
+            self.init_old_legal_delay()
         while len(self.unprocess_wire) > 0:
             self.reset_unprocess_wire_delay()
             self.cal_wire_delay()

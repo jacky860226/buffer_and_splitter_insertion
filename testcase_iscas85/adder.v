@@ -1,4 +1,4 @@
-module adder(a, b, c, cout, s, test);
+module adder(a, b, c, cout, s);
   wire n_00_;
   wire n_01_;
   wire n_02_;
@@ -9,7 +9,6 @@ module adder(a, b, c, cout, s, test);
   input c;
   output cout;
   output s;
-  output test;
   and_bb n_05_ (
     .a(b),
     .b(a),
@@ -45,5 +44,4 @@ module adder(a, b, c, cout, s, test);
     .b(n_01_),
     .c(cout)
   );
-  assign test = a;
 endmodule

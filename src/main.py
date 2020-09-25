@@ -52,12 +52,12 @@ def UpUpSolver(rawModule, wire_delay_adder_ty):
     return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
 
 
-def DownDownSolver(rawModule, wire_delay_adder_ty):
+def DownDownSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     module = Basic.Module(rawModule)
 
     delay_initialer = Down_delay_initialer(module)
     leveler = Leveler(module, delay_initialer, 'D',
-                      wire_delay_adder_ty(module))
+                      wire_delay_adder_ty(module), init_legal_delay)
     leveler.process()
 
     inserter = Inserter.Buffer_splitter_inserter(module)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
     DownDown = DownDownSolver(
-        rawModule, Wire_delay_adder.DynamicProgramming2)
+        rawModule, Wire_delay_adder.DynamicProgramming2, True)
 
     first = [UpUp, DownDown]
     output = min(first, key=lambda x: x[2])
