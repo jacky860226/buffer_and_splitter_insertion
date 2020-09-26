@@ -8,7 +8,9 @@ class Wire:
         self.output_delay = dict()
 
     def max_delay(self):
-        return max(self.output_delay.values())
+        if len(self.output_delay.values()) > 0:
+            return max(self.output_delay.values())
+        return 0
 
 
 class Node:
