@@ -1,19 +1,26 @@
 import BufferAndSplitterInsertionSolver as BSI
+from data_leveler import Up_delay_initialer
 
 
 class DynamicProgrammingBase:
     def __init__(self, module, solverTy):
         self.module = module
         self.solverTy = solverTy
+        self.delays = Up_delay_initialer(module)
 
     def get_wire_extra_delay(self, wire):
         node_port_list = list()
         S = list()
+        other = list()
         for key, value in wire.output_delay.items():
             node_port_list.append(key)
             S.append(value)
+            if key[0] in self.delays.raw_delay_table:
+                other.append(-self.delays[key[0]])
+            else:
+                other.append(0)
         solver = self.solverTy()
-        res = solver.solve(S.copy(), self.module.library.max_fan_out)
+        res = solver.solve(S.copy(), self.module.library.max_fan_out, other)
         return node_port_list, res
 
     def wire_add_delay(self, wire):

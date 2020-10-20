@@ -51,7 +51,7 @@ class DP_Solver:
         res.append(self.__build(p + 1, R, 1, level, realLevel))
         return res
 
-    def solve(self, bufferNum, SPO_max):
+    def solve(self, bufferNum, SPO_max, other=None):
         for num in bufferNum:
             if num < 0:
                 return None
@@ -99,13 +99,12 @@ class DP_Solver_2:
                 if res > ans:
                     res = ans
                     self.pivot[(L, R, SPO, level)] = (k, level + 1)
-            if res[0] == self.INF:
-                for k in range(2, self.SPO_max + 1):
-                    out = self.__dfs(L, R, k, level)
-                    ans = (out[0] + R-L+1, out[1] + 1)
-                    if res > ans:
-                        res = ans
-                        self.pivot[(L, R, SPO, level)] = (k, level)
+            for k in range(2, self.SPO_max + 1):
+                out = self.__dfs(L, R, k, level)
+                ans = (out[0] + R-L+1, out[1] + 1)
+                if res > ans:
+                    res = ans
+                    self.pivot[(L, R, SPO, level)] = (k, level)
         else:
             for p in range(L, R):
                 first = self.__dfs(L, p, SPO - 1, level)
@@ -139,7 +138,7 @@ class DP_Solver_2:
         res.append(self.__build(p + 1, R, 1, next_level, realLevel))
         return res
 
-    def solve(self, bufferNum, SPO_max):
+    def solve(self, bufferNum, SPO_max, other=None):
         for num in bufferNum:
             if num < 0:
                 return None
@@ -147,7 +146,10 @@ class DP_Solver_2:
         N = len(bufferNum)
         self.bufferNum = bufferNum
         self.idList = [i for i in range(N)]
-        self.idList.sort(key=lambda x: self.bufferNum[x])
+        if other is not None:
+            self.idList.sort(key=lambda x: (self.bufferNum[x], other[x]))
+        else:
+            self.idList.sort(key=lambda x: self.bufferNum[x])
         self.SPO_max = SPO_max
 
         search_result = None
