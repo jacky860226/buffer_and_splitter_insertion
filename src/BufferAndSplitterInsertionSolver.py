@@ -3,8 +3,6 @@ class DP_Solver:
         self.INF = 999999999999999999999999
 
     def __dfs(self, L, R, SPO, level):
-        if SPO < 1:
-            return self.INF
         if level > self.bufferNum[self.idList[L]]:
             return self.INF
         if (L, R, SPO, level) in self.dp:
@@ -82,8 +80,6 @@ class DP_Solver_2:
         self.INF = 999999999999999999999999
 
     def __dfs(self, L, R, SPO, level):
-        if SPO < 1:
-            return self.INF, self.INF
         if level > self.bufferNum[self.idList[L]]:
             return self.INF, self.INF
         if (L, R, SPO, level) in self.dp:
