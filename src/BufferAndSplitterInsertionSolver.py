@@ -1,3 +1,4 @@
+import math
 class DP_Solver:
     def __init__(self):
         self.INF = 999999999999999999999999
@@ -80,11 +81,13 @@ class DP_Solver_2:
         self.INF = 999999999999999999999999
 
     def __dfs(self, L, R, SPO, level):
-        if level > self.bufferNum[self.idList[L]]:
-            return self.INF, self.INF
+        if level > self.N + self.bufferNum[self.idList[L]]:
+            return (self.INF, self.INF)
         if (L, R, SPO, level) in self.dp:
             return self.dp[(L, R, SPO, level)]
         if L == R:
+            if level > self.bufferNum[self.idList[L]]:
+                return level - self.bufferNum[self.idList[L]], 0
             return 0, self.bufferNum[self.idList[L]] - level
         res = (self.INF, self.INF)
         self.pivot[(L, R, SPO, level)] = None
@@ -95,12 +98,6 @@ class DP_Solver_2:
                 if res > ans:
                     res = ans
                     self.pivot[(L, R, SPO, level)] = (k, level + 1)
-            for k in range(2, self.SPO_max + 1):
-                out = self.__dfs(L, R, k, level)
-                ans = (out[0] + R-L+1, out[1] + 1)
-                if res > ans:
-                    res = ans
-                    self.pivot[(L, R, SPO, level)] = (k, level)
         else:
             for p in range(L, R):
                 first = self.__dfs(L, p, SPO - 1, level)
@@ -115,7 +112,7 @@ class DP_Solver_2:
     def __build(self, L, R, SPO, level, realLevel=0, createNode=False):
         if L == R:
             res = self.idList[L]
-            buffer_delay = self.bufferNum[res] - level
+            buffer_delay = max(self.bufferNum[res] - level, 0)
             self.bufferNum[res] = realLevel + buffer_delay
             for i in range(buffer_delay):
                 res = [res]
@@ -147,6 +144,8 @@ class DP_Solver_2:
         else:
             self.idList.sort(key=lambda x: self.bufferNum[x])
         self.SPO_max = SPO_max
+
+        self.N = int(math.log2(N)/2) + 1
 
         search_result = None
         self.dp = dict()
