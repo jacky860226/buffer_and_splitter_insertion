@@ -1,3 +1,4 @@
+import random
 class Delay_initialer:
     def __init__(self, module):
         self.module = module
@@ -101,6 +102,7 @@ class Leveler:
 
     def _create_wire_sequence(self):
         self.wire_sequence = list(self.unprocess_wire)
+        random.shuffle(self.wire_sequence)
         self.wire_sequence.sort(
             key=lambda x: (self.delay_initialer[x.input_port[0]], x.max_delay()))
         first_node = self.wire_sequence[0].input_port[0]

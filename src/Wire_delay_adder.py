@@ -1,6 +1,6 @@
 import BufferAndSplitterInsertionSolver as BSI
 from data_leveler import Up_delay_initialer
-
+import random
 
 class DynamicProgrammingBase:
     def __init__(self, module, solverTy):
@@ -12,7 +12,9 @@ class DynamicProgrammingBase:
         node_port_list = list()
         S = list()
         other = list()
-        for key, value in wire.output_delay.items():
+        itemList = list(wire.output_delay.items())
+        random.shuffle(itemList)
+        for key, value in itemList:
             node_port_list.append(key)
             S.append(value)
             if key[0] in self.delays.raw_delay_table:

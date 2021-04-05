@@ -55,6 +55,8 @@ def UpUpSolver(rawModule, wire_delay_adder_ty):
 def DownDownSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     module = Basic.Module(rawModule)
 
+    print("cellNum:", len(module.cell_dict))
+
     delay_initialer = Down_delay_initialer(module)
     leveler = Leveler(module, delay_initialer, 'D',
                       wire_delay_adder_ty(module), init_legal_delay)
@@ -105,11 +107,11 @@ if __name__ == '__main__':
 
     print(arg.input)
 
-    UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
+    #UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
     DownDown = DownDownSolver(
         rawModule, Wire_delay_adder.DynamicProgramming2, True)
 
-    first = [UpUp, DownDown]
+    first = [DownDown]
     output = min(first, key=lambda x: x[2])
 
     # the old method

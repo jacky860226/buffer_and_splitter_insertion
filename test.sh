@@ -6,9 +6,9 @@ if [ "$#" -ne 1 ]; then
         if [ -f "${path}" ]; then
             f=${path##*/}
             filename="${f%.*}"
-            python3 src/main.py -i testcase_iscas85/$filename.v -o test_output/"$filename"_jinkela.v
+            time python3 src/main.py -i testcase_iscas85/$filename.v -o test_output/"$filename"_jinkela.v
         fi
     done
 else
-	python3 src/main.py -i testcase_iscas85/$1.v -o test_output/"$1"_jinkela.v
+	time python3 src/main.py -i testcase_iscas85/$1.v -o test_output/"$1"_jinkela.v
 fi
