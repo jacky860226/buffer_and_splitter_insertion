@@ -26,7 +26,7 @@ def process(argv):
     splitter_checker(module)
     # module.net_renaming()
     # module.instance_renaming()
-    if len(argv) == 3:
+    if len(argv) == 2:
         out_file = argv[1]
     else:
         out_file = file_name[:-2] + "_balanced.v"
@@ -39,6 +39,7 @@ file_to_process = "./Files/c6288.v"
 
 
 def main(argv):
+    print(argv)
     file = [file_to_process]
     if len(argv) > 0:
         file = argv
