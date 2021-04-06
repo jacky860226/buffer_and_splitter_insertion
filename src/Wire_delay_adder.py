@@ -127,7 +127,7 @@ class SecondAdder:
         basket = self._decompose(len(node.child))
         for item in basket:
             res = []
-            for i in range(item):
+            for _i in range(item):
                 res.append(node.child.pop())
             new_node = PsudoNode(res, 0, node.parent)
             new_node.pull()

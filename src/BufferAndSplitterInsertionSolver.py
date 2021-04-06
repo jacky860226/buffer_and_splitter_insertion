@@ -33,7 +33,7 @@ class DP_Solver:
             res = self.idList[L]
             buffer_delay = self.bufferNum[res] - level
             self.bufferNum[res] = realLevel + buffer_delay
-            for i in range(buffer_delay):
+            for _i in range(buffer_delay):
                 res = [res]
             if createNode:
                 res = [res]
@@ -115,7 +115,7 @@ class DP_Solver_2:
             res = self.idList[L]
             buffer_delay = max(self.bufferNum[res] - level, 0)
             self.bufferNum[res] = realLevel + buffer_delay
-            for i in range(buffer_delay):
+            for _i in range(buffer_delay):
                 res = [res]
             if createNode:
                 res = [res]

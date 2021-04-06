@@ -21,7 +21,7 @@ class Up_delay_initialer(Delay_initialer):
             if node in self.raw_delay_table:
                 return self.raw_delay_table[node]
             raw_delay = 0
-            for port_name, wire in node.get_outputs():
+            for _port_name, wire in node.get_outputs():
                 for next_node, next_port_name in wire.output_port_set:
                     wire_delay = wire.output_delay[(next_node, next_port_name)]
                     raw_delay = max(raw_delay, dfs(next_node) + wire_delay)
@@ -42,7 +42,7 @@ class Down_delay_initialer(Delay_initialer):
                 return self.raw_delay_table[node]
             raw_delay = 0
             for port_name, wire in node.get_inputs():
-                (next_node, next_port_name) = wire.input_port
+                (next_node, _next_port_name) = wire.input_port
                 wire_delay = wire.output_delay[(node, port_name)]
                 raw_delay = max(raw_delay, dfs(next_node) + wire_delay)
             raw_delay += 1

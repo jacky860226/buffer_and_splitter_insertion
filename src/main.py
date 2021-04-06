@@ -27,13 +27,13 @@ def printer(module, JJ_level, JJ_count, buffer_cnt, splitter_cnt, dec_buffer):
     print("")
 
 
-def UpUpSolver(rawModule, wire_delay_adder_ty):
+def UpUpSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     module = Basic.Module(rawModule)
 
     delay_initialer = Up_delay_initialer(module)
 
     leveler = Leveler(module, delay_initialer, 'U',
-                      wire_delay_adder_ty(module))
+                      wire_delay_adder_ty(module), init_legal_delay)
     leveler.process()
 
     inserter = Inserter.Buffer_splitter_inserter(module)
@@ -107,7 +107,8 @@ if __name__ == '__main__':
 
     print(arg.input)
 
-    #UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2)
+    # UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2, False)
+    # printer(*UpUp)
     DownDown = DownDownSolver(
         rawModule, Wire_delay_adder.DynamicProgramming2, True)
 
@@ -124,7 +125,6 @@ if __name__ == '__main__':
     '''
 
     output_module = output[0]
-
     printer(*output)
 
     if output_module is not None:
