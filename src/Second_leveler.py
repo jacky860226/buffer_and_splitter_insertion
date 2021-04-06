@@ -14,7 +14,7 @@ class Next_delay_calculater:
             return self.raw_delay_table.get(node)
         raw_delay = 0
         for port_name, wire in node.get_inputs():
-            (next_node, next_port_name) = wire.input_port
+            (next_node, _next_port_name) = wire.input_port
             wire_delay = wire.output_delay[(node, port_name)]
             raw_delay = max(raw_delay, self.get_delay(next_node) + wire_delay)
         raw_delay += 1
