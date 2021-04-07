@@ -18,7 +18,8 @@ def process_command():
     return parser.parse_args()
 
 
-def printer(module, JJ_level, JJ_count, buffer_cnt, splitter_cnt, dec_buffer):
+def printer(module, JJ_level, JJ_count, buffer_cnt, splitter_cnt, dec_buffer, solveTy):
+    print("Solved by:", solveTy)
     print("JJ level =", JJ_level)
     print("JJ count =", JJ_count)
     print("bufferNum =", buffer_cnt,
@@ -49,13 +50,11 @@ def UpUpSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     JJ_level = delay_initialer.max_delay() - 2
     JJ_count = module.get_JJ_count()
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer, "UpUpSolver"
 
 
 def DownDownSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     module = Basic.Module(rawModule)
-
-    print("cellNum:", len(module.cell_dict))
 
     delay_initialer = Down_delay_initialer(module)
     leveler = Leveler(module, delay_initialer, 'D',
@@ -75,7 +74,50 @@ def DownDownSolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
     JJ_level = delay_initialer.max_delay() - 2
     JJ_count = module.get_JJ_count()
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer, "DownDownSolver"
+
+
+def TwoWaySolver(rawModule, wire_delay_adder_ty, init_legal_delay=False):
+    UU_module = Basic.Module(rawModule)
+    UU_delay_initialer = Up_delay_initialer(UU_module)
+    UU_leveler = Leveler(UU_module, UU_delay_initialer, 'U',
+                         wire_delay_adder_ty(UU_module), init_legal_delay)
+    UU_leveler.process()
+    UU_level = UU_delay_initialer.max_delay() - 2
+
+    DD_module = Basic.Module(rawModule)
+    DD_delay_initialer = Down_delay_initialer(DD_module)
+    DD_leveler = Leveler(DD_module, DD_delay_initialer, 'D',
+                         wire_delay_adder_ty(DD_module), init_legal_delay)
+    DD_leveler.process()
+    DD_level = DD_delay_initialer.max_delay() - 2
+
+    if (UU_level, UU_module.getWireDelaySum()) <= (DD_level, DD_module.getWireDelaySum()):
+        module = UU_module
+        delay_initialer = UU_delay_initialer
+        leveler = UU_leveler
+        SolveTy = "UpUpSolver"
+    else:
+        module = DD_module
+        delay_initialer = DD_delay_initialer
+        leveler = DD_leveler
+        SolveTy = "DownDownSolver"
+
+    print("cellNum:", len(module.cell_dict))
+    inserter = Inserter.Buffer_splitter_inserter(module)
+    dec_buffer = inserter.insert_splitter()
+    inserter.insert_buffer_and_splitter()
+
+    leveler.reset_unprocess_wire_delay()
+    leveler.cal_wire_delay()
+    for wire in module.wires:
+        for delay in wire.output_delay.values():
+            assert(delay == 0)
+
+    JJ_level = delay_initialer.max_delay() - 2
+    JJ_count = module.get_JJ_count()
+
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer, SolveTy
 
 
 def SecondSolver(rawModule, wire_delay_adder_ty):
@@ -92,7 +134,7 @@ def SecondSolver(rawModule, wire_delay_adder_ty):
     JJ_level = leveler.delay_calculater.max_delay() - 2
     JJ_count = module.get_JJ_count()
 
-    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer
+    return module, JJ_level, JJ_count, inserter.buffer_cnt, inserter.splitter_cnt, dec_buffer, "SecondSolver"
 
 
 if __name__ == '__main__':
@@ -107,12 +149,15 @@ if __name__ == '__main__':
 
     print(arg.input)
 
-    # UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2, False)
+    # UpUp = UpUpSolver(rawModule, Wire_delay_adder.DynamicProgramming2, True)
+    # DownDown = DownDownSolver(
+    #     rawModule, Wire_delay_adder.DynamicProgramming2, True)
     # printer(*UpUp)
-    DownDown = DownDownSolver(
+    # printer(*DownDown)
+    TwoWay = TwoWaySolver(
         rawModule, Wire_delay_adder.DynamicProgramming2, True)
 
-    first = [DownDown]
+    first = [TwoWay]
     output = min(first, key=lambda x: x[2])
 
     # the old method

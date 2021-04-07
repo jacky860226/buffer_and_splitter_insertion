@@ -1,3 +1,4 @@
+import math
 import default_cell_library
 
 
@@ -88,6 +89,15 @@ class Module:
         self.wires = set()
         for wire in wire_dict.values():
             self.wires.add(wire)
+
+    def getWireDelaySum(self):
+        Result = 0
+        for wire in self.wires:
+            for _key, value in wire.output_delay.items():
+                Result += value / \
+                    max(math.log(len(wire.output_delay.items()),
+                                 self.library.max_fan_out), 1)
+        return Result
 
     def add_wire_to_cell_input(self, wire, port_name, cell, delay=0):
         wire_output = (cell, port_name)

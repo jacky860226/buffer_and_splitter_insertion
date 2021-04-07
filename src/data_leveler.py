@@ -63,31 +63,27 @@ class DP_delay_initialer(Delay_initialer):
         BaseCut = list()
         BaseCost = 0
         for port_name, wire in node.get_inputs():
-            wire_delay = wire.output_delay[(node, port_name)]
-            BaseCost += wire_delay
-            BaseCut.append(((port_name, wire, node), wire_delay))
+            BaseCut.append(((port_name, wire, node), 0))
 
         K = max(self.K, len(BaseCut))
 
-        def calCostCut(Cut):
-            maxCost = 0
-            for ((_port_name, _wire, _node), wire_delay) in Cut:
-                maxCost = max(maxCost, wire_delay)
-            Cost = 0
-            for i in range(len(Cut)):
-                Cut[i] = (Cut[i][0], maxCost - Cut[i][1])
-                Cost += Cut[i][1]
-            return Cost
+        def normal():
+            yield (BaseCut, BaseCost)
+        
+        if K == len(BaseCut):
+            return normal()
 
         def dfs(Cut, idx, Cost):
             if len(Cut) > K:
                 return
             if idx == len(Cut):
-                Cost += calCostCut(Cut)
                 yield (Cut, Cost)
                 return
             yield from dfs(Cut, idx+1, Cost)
-            ((_, wire, _node), wire_delay) = Cut[idx]
+            ((cur_port_name, wire, cur_node), wire_cost) = Cut[idx]
+            wire_delay = wire.output_delay[(cur_node, cur_port_name)]
+            Cost += wire_delay
+            wire_cost += wire_delay + 1
             (next_node, _) = wire.input_port
             if len(next_node.get_inputs()) == 0:
                 return
@@ -96,11 +92,8 @@ class DP_delay_initialer(Delay_initialer):
             Left = Cut[0:idx]
             Right = Cut[idx+1:]
             for next_port_name, next_wire in next_node.get_inputs():
-                next_wire_delay = next_wire.output_delay[(
-                    next_node, next_port_name)]
-                Cost += next_wire_delay
-                Left.append(((next_port_name, next_wire, next_node),
-                             wire_delay+next_wire_delay+1))
+                Left.append(
+                    ((next_port_name, next_wire, next_node), wire_cost))
             Left.extend(Right)
             yield from dfs(Left, idx+1, Cost)
         return dfs(BaseCut, 0, BaseCost)
@@ -117,13 +110,16 @@ class DP_delay_initialer(Delay_initialer):
             self.DP_table[node] = None
             for (Cut, Cost) in self.get_K_Feasible_Cuts(node):
                 SLD = list()
-                for ((_port_name, wire, _node), _wire_cost) in Cut:
+                for i in range(len(Cut)):
+                    ((port_name, wire, nd), wire_cost) = Cut[i]
                     (next_node, _next_port_name) = wire.input_port
-                    SLD.append(self.Down_delay[next_node])
+                    wire_delay = wire.output_delay[(nd, port_name)]
+                    SLD.append(self.Down_delay[next_node] + wire_cost + wire_delay)
                     Cost += dp(next_node)[1]
                 SLDmax = max(SLD)
-                for s in SLD:
-                    Cost += SLDmax - s
+                for i in range(len(Cut)):
+                    Cost += SLDmax - SLD[i]
+                    Cut[i] = (Cut[i][0], SLDmax - SLD[i])
                 if self.DP_table[node] is None or self.DP_table[node][1] > Cost:
                     self.DP_table[node] = (Cut, Cost)
             return self.DP_table[node]
@@ -220,11 +216,12 @@ class Leveler:
     def _level_up(self):
         if self.need_legal_delay:
             self.init_old_legal_delay()
-        while len(self.unprocess_wire) > 0:
-            self.reset_unprocess_wire_delay()
-            self.cal_wire_delay()
-            self._create_wire_sequence()
-            wire = self.wire_sequence[0]
-            self.unprocess_wire.remove(wire)
-            self.wire_delay_adder.wire_add_delay(wire)
+        else:
+            while len(self.unprocess_wire) > 0:
+                self.reset_unprocess_wire_delay()
+                self.cal_wire_delay()
+                self._create_wire_sequence()
+                wire = self.wire_sequence[0]
+                self.unprocess_wire.remove(wire)
+                self.wire_delay_adder.wire_add_delay(wire)
         self.cal_wire_delay()
