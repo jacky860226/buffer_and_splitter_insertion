@@ -6,7 +6,7 @@ import sys
 import Second_leveler
 import Wire_delay_adder
 
-from data_leveler import Up_delay_initialer, Down_delay_initialer, Leveler
+from data_leveler import Up_delay_initialer, Down_delay_initialer, DP_delay_initialer, Leveler
 
 
 def process_command():

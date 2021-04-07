@@ -1,4 +1,6 @@
 import random
+
+
 class Delay_initialer:
     def __init__(self, module):
         self.module = module
@@ -50,6 +52,110 @@ class Down_delay_initialer(Delay_initialer):
             return raw_delay
         self.raw_delay_table = dict()
         dfs(self.module.output)
+
+
+class DP_delay_initialer(Delay_initialer):
+    def __init__(self, module, K):
+        super().__init__(module)
+        self.K = K
+
+    def get_K_Feasible_Cuts(self, node):
+        BaseCut = list()
+        BaseCost = 0
+        for port_name, wire in node.get_inputs():
+            wire_delay = wire.output_delay[(node, port_name)]
+            BaseCost += wire_delay
+            BaseCut.append(((port_name, wire, node), wire_delay))
+
+        K = max(self.K, len(BaseCut))
+
+        def calCostCut(Cut):
+            maxCost = 0
+            for ((_port_name, _wire, _node), wire_delay) in Cut:
+                maxCost = max(maxCost, wire_delay)
+            Cost = 0
+            for i in range(len(Cut)):
+                Cut[i] = (Cut[i][0], maxCost - Cut[i][1])
+                Cost += Cut[i][1]
+            return Cost
+
+        def dfs(Cut, idx, Cost):
+            if len(Cut) > K:
+                return
+            if idx == len(Cut):
+                Cost += calCostCut(Cut)
+                yield (Cut, Cost)
+                return
+            yield from dfs(Cut, idx+1, Cost)
+            ((_, wire, _node), wire_delay) = Cut[idx]
+            (next_node, _) = wire.input_port
+            if len(next_node.get_inputs()) == 0:
+                return
+            if len(Cut)-1+len(next_node.get_inputs()) > K:
+                return
+            Left = Cut[0:idx]
+            Right = Cut[idx+1:]
+            for next_port_name, next_wire in next_node.get_inputs():
+                next_wire_delay = next_wire.output_delay[(
+                    next_node, next_port_name)]
+                Cost += next_wire_delay
+                Left.append(((next_port_name, next_wire, next_node),
+                             wire_delay+next_wire_delay+1))
+            Left.extend(Right)
+            yield from dfs(Left, idx+1, Cost)
+        return dfs(BaseCut, 0, BaseCost)
+
+    def create_raw_delay(self):
+        self.Down_delay = Down_delay_initialer(self.module)
+        self.Down_delay.create_raw_delay()
+        self.DP_table = dict()
+        self.DP_table[self.module.input] = ([], 0)
+
+        def dp(node):
+            if node in self.DP_table:
+                return self.DP_table[node]
+            self.DP_table[node] = None
+            for (Cut, Cost) in self.get_K_Feasible_Cuts(node):
+                SLD = list()
+                for ((_port_name, wire, _node), _wire_cost) in Cut:
+                    (next_node, _next_port_name) = wire.input_port
+                    SLD.append(self.Down_delay[next_node])
+                    Cost += dp(next_node)[1]
+                SLDmax = max(SLD)
+                for s in SLD:
+                    Cost += SLDmax - s
+                if self.DP_table[node] is None or self.DP_table[node][1] > Cost:
+                    self.DP_table[node] = (Cut, Cost)
+            return self.DP_table[node]
+
+        dp(self.module.output)
+
+        def getCutSet(node):
+            CutSet = set()
+            for ((port_name, wire, nd), wire_cost) in self.DP_table[node][0]:
+                CutSet.add((port_name, wire))
+                wire.output_delay[(nd, port_name)] += wire_cost
+            return CutSet
+
+        self.raw_delay_table = dict()
+
+        def dfs(node, Cut):
+            if node in self.raw_delay_table:
+                return self.raw_delay_table[node]
+            raw_delay = 0
+            for port_name, wire in node.get_inputs():
+                nextCut = Cut
+                (next_node, _next_port_name) = wire.input_port
+                if (port_name, wire) in Cut:
+                    nextCut = getCutSet(next_node)
+                wire_delay = wire.output_delay[(node, port_name)]
+                raw_delay = max(raw_delay, dfs(
+                    next_node, nextCut) + wire_delay)
+            raw_delay += 1
+            self.raw_delay_table[node] = raw_delay
+            return raw_delay
+
+        dfs(self.module.output, getCutSet(self.module.output))
 
 
 class Leveler:
