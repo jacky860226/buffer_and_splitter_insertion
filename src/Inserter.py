@@ -33,12 +33,16 @@ class Buffer_splitter_inserter:
         return dec_buffer
 
     def _process_wire(self, wire):
+        if len(wire.output_delay) == 0:
+            return
         node_port_list, res = self.wire_delay_adder.get_wire_extra_delay(wire)
         for i in range(len(node_port_list)):
             assert(res[0][1][i] == wire.output_delay[node_port_list[i]])
         self._build(wire.input_port, res[1], node_port_list)
 
     def _process_wire_splitter(self, wire):
+        if len(wire.output_delay) == 0:
+            return
         node_port_list, res = self.wire_delay_adder.get_wire_extra_delay(wire)
         for i in range(len(node_port_list)):
             assert(res[0][1][i] == wire.output_delay[node_port_list[i]])
